@@ -13,12 +13,11 @@ const authenticate = async (req, res, next) => {
     const user = await User.findOne({ _id: decoded._id })
 
     if (!user) {
+      console.log('User not found')
       throw new Error()
     }
 
-    req.userId = user._id
-    req.userRole = user.isAdmin ? 'admin' : 'doctor' // Set the user's role
-    req.userProjects = user.projects // Set the user's projects
+    req.user = user; // Set the full user object in req.user
     next()
   } catch (error) {
     res.status(401).json({ message: 'Please authenticate.' })

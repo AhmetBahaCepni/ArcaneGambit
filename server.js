@@ -23,9 +23,11 @@ app.use(express.json())
 
 const userRoutes = require('./routes/userRoutes')
 const authRoutes = require('./routes/authRoutes')
+const characterRoutes = require('./routes/characterRoutes')
 
 app.use('/api/users', userRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/characters', authenticate, characterRoutes) // Protect character routes with authentication
 
 // Authorization middleware for static files
 

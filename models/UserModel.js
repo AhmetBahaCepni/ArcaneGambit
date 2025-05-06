@@ -15,6 +15,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isActive: {
+    type: Boolean,
+    default: false // New field to track account activation
+  },
   characters: [
     {
       type: mongoose.Schema.Types.ObjectId,

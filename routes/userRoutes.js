@@ -7,9 +7,6 @@ const checkAdmin = require('../middlewares/checkAdmin')
 // Get all users (Admin only)
 router.get('/', authenticate, checkAdmin, userController.getAllUsers)
 
-// Get all doctors
-router.get('/doctors', authenticate, userController.getDoctors)
-
 // Get user by ID (Authenticated users)
 router.get('/:id', authenticate, userController.getUserById)
 
@@ -21,6 +18,11 @@ router.put('/:id', authenticate, checkAdmin, userController.updateUser)
 
 // Delete a user (Admin only)
 router.delete('/:id', authenticate, checkAdmin, userController.deleteUser)
+
+router.post('/register', userController.register)
+
+router.post('/register/:token', userController.activateAccount)
+
 
 // Forgot password
 router.post('/forgot-password', userController.forgotPassword)

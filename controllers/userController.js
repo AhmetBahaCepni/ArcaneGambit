@@ -15,23 +15,6 @@ exports.getAllUsers = async (req, res) => {
   }
 }
 
-exports.getDoctors = async (req, res) => {
-  try {
-    const doctors = await User.find({ isAdmin: false }) // filter by isAdmin
-    // only return email and name
-    const doctorList = doctors.map(doctor => {
-      return {
-        _id: doctor._id,
-        email: doctor.email,
-        projects: doctor.projects
-      }
-    })
-    res.status(200).json(doctorList)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
-
 // Get user by ID
 exports.getUserById = async (req, res) => {
   try {
@@ -58,6 +41,95 @@ exports.createUser = async (req, res) => {
     res.status(201).json(newUser)
   } catch (error) {
     res.status(400).json({ message: error.message })
+  }
+}
+
+exports.register = async (req, res) => {
+  const { email, password } = req.body
+
+  try {
+    // Check if the username or email already exists
+    const existingUser = await User.findOne({ email })
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email already exists' })
+    }
+
+    // Create a new user as inactive
+    const user = new User({ email, password, isActive: false })
+    await user.save()
+
+    // Generate a verification code
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString()
+    const expirationTime = new Date(Date.now() + 90 * 60 * 1000) // 90 minutes from now
+
+    // Save the recovery token
+    const recoveryToken = new RecoveryToken({
+      userId: user._id,
+      token: verificationCode,
+      expiresAt: expirationTime
+    })
+    await recoveryToken.save()
+
+    // Send the verification code to the user's email
+    await emailService.sendEmail({
+      to: email,
+      subject: 'Account Verification',
+      text: `Your verification code is: ${verificationCode}. It will expire in 90 minutes.`
+    })
+
+    res
+      .status(201)
+      .json({
+        message: 'User registered successfully. Please verify your email.'
+      })
+
+    // Schedule account deletion if not activated
+    setTimeout(async () => {
+      const tokenExists = await RecoveryToken.findOne({ userId: user._id })
+      if (tokenExists) {
+        await User.findByIdAndDelete(user._id)
+        await RecoveryToken.deleteOne({ userId: user._id })
+      }
+    }, 15 * 60 * 1000) // 15 minutes
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+}
+
+exports.activateAccount = async (req, res) => {
+  const { token } = req.params
+  const { email } = req.query
+  // request : 
+
+  try {
+    // Validate the token
+    const recoveryToken = await RecoveryToken.findOne({ token })
+    if (!recoveryToken) {
+      return res.status(400).json({ message: 'Invalid or expired token' })
+    }
+
+    const user = await User.findById(recoveryToken.userId)
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    // Check if the email matches
+    if (user.email !== email) {
+      return res.status(400).json({ message: 'Invalid email' })
+    }
+
+    // Activate the user account
+    user.isActive = true
+    await user.save()
+
+    // Remove the used recovery token from the database
+    await RecoveryToken.deleteOne({ token })
+    res.status(200).json({ message: 'Account activated successfully' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
   }
 }
 

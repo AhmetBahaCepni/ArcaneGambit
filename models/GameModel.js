@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const GameSchema = new mongoose.Schema({
+    timeStamp: {
+        type: Date,
+        default: Date.now // Automatically set the timestamp when the game is created
+    },
     gameStatus: {
         type: String,
         required: true,
