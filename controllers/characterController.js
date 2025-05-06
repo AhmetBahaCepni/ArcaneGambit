@@ -4,8 +4,6 @@ const User = require('../models/UserModel');
 // Get all characters for the logged-in user
 exports.getAllCharacters = async (req, res) => {
     try {
-        // 
-        console.log('Get called'); // Log the user ID for debugging
         const user = await User.findById(req.user._id).populate('characters');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
