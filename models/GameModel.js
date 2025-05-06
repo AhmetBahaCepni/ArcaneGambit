@@ -1,42 +1,45 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const GameSchema = new mongoose.Schema({
-    timeStamp: {
-        type: Date,
-        default: Date.now // Automatically set the timestamp when the game is created
-    },
-    gameStatus: {
-        type: String,
-        required: true,
-        enum: ['ongoing', 'started', 'finished'] // Valid game states
-    },
-    currentTurnCharacterId: {
+  sessionId: {
+    type: Number
+  },
+  timeStamp: {
+    type: Date,
+    default: Date.now // Automatically set the timestamp when the game is created
+  },
+  gameStatus: {
+    type: String,
+    required: true,
+    enum: ['ongoing', 'started', 'finished'] // Valid game states
+  },
+  currentTurnCharacterId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Character' // Reference to the User model
+  },
+  users: [
+    {
+      userid: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Character' // Reference to the User model
-    },
-    users: [
-        {
-            userid: {
-                type: mongoose.Schema.Types.ObjectId,
-                required: true,
-                ref: 'User' // Reference to the User model
-            },
-            characterId: {
-                type: mongoose.Schema.Types.ObjectId,
-                required: true,
-                ref: 'Character' // Reference to the Character model
-            }
-        }
-    ],
-    spectators: [
-        {
-            UserId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User' // Reference to the User model
-            }
-        }
-    ]
-});
+        ref: 'User' // Reference to the User model
+      },
+      characterId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Character' // Reference to the Character model
+      }
+    }
+  ],
+  spectators: [
+    {
+      UserId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User' // Reference to the User model
+      }
+    }
+  ]
+})
 
-module.exports = mongoose.model('Game', GameSchema);
+module.exports = mongoose.model('Game', GameSchema)
