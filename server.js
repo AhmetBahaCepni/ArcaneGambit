@@ -79,6 +79,7 @@ const createOrUpdateAdminAccount = async password => {
       admin = new User({
         email: adminEmail,
         isAdmin: true,
+        isActive: true,
         password: password,
       })
       await admin.save()

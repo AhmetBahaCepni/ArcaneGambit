@@ -33,11 +33,36 @@ exports.endSession = async (req, res) => {
     }
 };
 
+exports.deleteSession = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+       // find the session by id, if token acquirer is one of the players or the token acquirer is the admin, delete the session
+        const game = await Game.findById(sessionId);
+        if (!game) return res.status(404).json({ message: 'Session not found' });
+
+        // Check if the user is a player or admin
+        const userId = req.user.id; // Extract userId from token
+        const isPlayer = game.users.some(user => user.userid.toString() === userId);
+        const isAdmin = req.user.isAdmin // Assuming you have a role field in your user model
+
+        if (isPlayer || isAdmin) {
+            await Game.deleteOne({ _id: sessionId });
+            res.status(200).json({ message: 'Session deleted successfully' });
+        } else {
+            res.status(403).json({ message: 'You do not have permission to delete this session' });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Add a player to a session
 exports.addPlayer = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { userId, characterId } = req.body;
+        const { characterId } = req.body;
+        const userId = req.user.id; // Extract userId from token
 
         const game = await Game.findById(sessionId);
         if (!game) return res.status(404).json({ message: 'Session not found' });
@@ -50,11 +75,30 @@ exports.addPlayer = async (req, res) => {
     }
 };
 
+exports.removePlayer = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const userId = req.user.id; // Extract userId from token
+
+        const game = await Game
+.findById(sessionId);
+        if (!game) return res.status(404).json({ message: 'Session not found' });
+
+        game.users = game.users.filter(user => user.userid.toString() !== userId);
+        await game.save();
+        res.status(200).json(game);
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 // Add a spectator to a session
 exports.addSpectator = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { userId } = req.body;
+        const userId = req.user.id; // Extract userId from token
 
         const game = await Game.findById(sessionId);
         if (!game) return res.status(404).json({ message: 'Session not found' });
@@ -71,7 +115,7 @@ exports.addSpectator = async (req, res) => {
 exports.removeSpectator = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { userId } = req.body;
+        const userId = req.user.id; // Extract userId from token
 
         const game = await Game.findById(sessionId);
         if (!game) return res.status(404).json({ message: 'Session not found' });
