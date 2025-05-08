@@ -9,12 +9,25 @@ const CharacterSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    health: {
+    class: {
+        type: String,
+        required: true,
+        enum: ['archer', 'mage', 'warrior'] // Restrict values to these options
+    },
+    luck: {
         type: Number,
         required: true
     },
-    state: {
-        type: String,
+    attack: {
+        type: Number,
+        required: true
+    },
+    defense: {
+        type: Number,
+        required: true
+    },
+    vitality: {
+        type: Number,
         required: true
     },
     attackType: {
@@ -24,7 +37,12 @@ const CharacterSchema = new mongoose.Schema({
     attackDamage: {
         type: Number,
         required: true
+    },
+    characterState: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CharacterState' // Reference to the CharacterState model
     }
+
 });
 
 module.exports = mongoose.model('Character', CharacterSchema);

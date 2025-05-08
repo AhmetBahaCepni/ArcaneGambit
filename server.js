@@ -25,11 +25,15 @@ const userRoutes = require('./routes/userRoutes')
 const authRoutes = require('./routes/authRoutes')
 const characterRoutes = require('./routes/characterRoutes')
 const gameRoutes = require('./routes/gameRoutes')
+const arRoutes = require('./routes/arRoutes')
+const unrealRoutes = require('./routes/unrealRoutes')
 
 app.use('/api/users', userRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/characters', authenticate, characterRoutes) // Protect character routes with authentication
 app.use('/api/games', authenticate, gameRoutes) // Protect game routes with authentication
+app.use('/api/ar', authenticate, arRoutes) // Protect AR routes with authentication
+app.use('/api/unreal', authenticate, unrealRoutes) // Protect Unreal Engine routes with authentication
 
 // Authorization middleware for static files
 

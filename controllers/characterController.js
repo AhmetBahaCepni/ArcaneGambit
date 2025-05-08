@@ -35,16 +35,25 @@ exports.getCharacterById = async (req, res) => {
 
 // Create a new character for the logged-in user
 exports.createCharacter = async (req, res) => {
-    const { characterName, avatar, health, state, attackType, attackDamage } = req.body;
+    const { characterName, avatar, class: characterClass, luck, attack, defense, vitality, attackType, attackDamage } = req.body;
 
     try {
+        // Validate the class field
+        if (!['archer', 'mage', 'warrior'].includes(characterClass)) {
+            return res.status(400).json({ message: 'Invalid class. Must be archer, mage, or warrior.' });
+        }
+
         const character = new Character({
             characterName,
             avatar,
-            health,
-            state,
+            class: characterClass,
+            luck,
+            attack,
+            defense,
+            vitality,
             attackType,
             attackDamage
+            
         });
         await character.save();
 

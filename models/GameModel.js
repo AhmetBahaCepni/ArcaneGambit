@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const CharacterState = require('./CharacterState') // Import CharacterState model
 
 const GameSchema = new mongoose.Schema({
   sessionId: {
@@ -25,19 +26,30 @@ const GameSchema = new mongoose.Schema({
         required: true,
         ref: 'User' // Reference to the User model
       },
-      characterId: {
+      characterState: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Character' // Reference to the Character model
+        ref: 'CharacterState' // Reference to the CharacterState model
+      },
+      characterName: {
+        type: String,
+        required: true
+      },
+      class: {
+        type: String,
+        required: true,
+        enum: ['archer', 'mage', 'warrior']
+      },
+      avatar: {
+        type: String,
+        required: true
       }
     }
   ],
   spectators: [
     {
-      UserId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' // Reference to the User model
-      }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User' // Reference to the User model
     }
   ]
 })
