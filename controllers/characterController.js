@@ -37,11 +37,18 @@ exports.getCharacterById = async (req, res) => {
 exports.createCharacter = async (req, res) => {
     const { characterName, avatar, class: characterClass, luck, attack, defense, vitality, attackType, attackDamage } = req.body;
 
-    try {
-        // Validate the class field
+    try {        // Validate the class field
         if (!['archer', 'mage', 'warrior'].includes(characterClass)) {
             return res.status(400).json({ message: 'Invalid class. Must be archer, mage, or warrior.' });
         }
+
+        // Calculate maxHealth based on class and vitality
+        const classHealthMap = {
+            archer: 96,
+            mage: 80,
+            warrior: 120
+        };
+        const maxHealth = classHealthMap[characterClass] + vitality;
 
         const character = new Character({
             characterName,
@@ -52,7 +59,8 @@ exports.createCharacter = async (req, res) => {
             defense,
             vitality,
             attackType,
-            attackDamage
+            attackDamage,
+            maxHealth
             
         });
         await character.save();

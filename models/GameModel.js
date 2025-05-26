@@ -28,7 +28,7 @@ const GameSchema = new mongoose.Schema({
       },
       characterState: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
+        required: false,
         ref: 'CharacterState' // Reference to the CharacterState model
       },
       characterName: {
