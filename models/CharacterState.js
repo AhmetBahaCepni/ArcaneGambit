@@ -17,7 +17,28 @@ const CharacterStateSchema = new mongoose.Schema({
     attackDamage: {
         type: Number,
         required: true
-    }
+    },
+    heal: {
+        type: Number,
+        required: false, // Make heal nullable
+        default: 0 // Default value if not provided
+    },
+    bleedingCount: {
+        type: Number,
+        required: false, // Make bleedingCount nullable
+        default: 0 // Default value if not provided
+    },
+    bleedingDamage: {
+        type: Number,
+        required: false, // Make bleedingDamage nullable
+        default: 0 // Default value if not provided
+    },
+    stunCount: {
+        type: Number,
+        required: false, // Make stunCount nullable
+        default: 0 // Default value if not provided
+    },
+
 });
 
 /* example:

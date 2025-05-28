@@ -19,6 +19,12 @@ const GameSchema = new mongoose.Schema({
     required: true,
     ref: 'Character' // Reference to the User model
   },
+  roomCode: {
+    type: String,
+    required: false,
+    unique: true,
+    length: 6
+  },
   users: [
     {
       userid: {

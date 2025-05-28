@@ -14,10 +14,13 @@ router.delete('/:sessionId', authenticate, gameController.deleteSession);
 // Add a player to a session
 router.post('/:sessionId/add-player', authenticate, gameController.addPlayer);
 
+// Get session details
+router.get('/:sessionId', authenticate, gameController.getSession);
+
 // Remove a player from a session
 router.delete('/:sessionId/remove-player', authenticate, gameController.removePlayer);
+// Update character state by user ID (for Unreal Engine)
+router.put('/:sessionId/update-states', authenticate, gameController.updateCharacterStates);
 
-// Update a player's character state
-router.put('/:sessionId/update-character-state', authenticate, gameController.updateCharacterState);
 
 module.exports = router;

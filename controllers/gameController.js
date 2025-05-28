@@ -59,9 +59,19 @@ exports.cvCreateSession = async (req, res) => {
     })
     await characterStateData.save()
 
+    // Generate a unique 6-digit room code
+    let roomCode
+    let isUnique = false
+    while (!isUnique) {
+      roomCode = Math.floor(100000 + Math.random() * 900000).toString()
+      const existing = await Game.findOne({ roomCode })
+      if (!existing) isUnique = true
+    }
+
     const newGame = new Game({
       gameStatus: 'started',
       currentTurnCharacterId: characterId, // Update to use character state
+      roomCode,
       users: [
         {
           characterState: characterStateData._id, // Use the created character state
@@ -133,9 +143,30 @@ exports.getSession = async (req, res) => {
     const { sessionId } = req.params
     const game = await Game.findById(sessionId).populate('users.characterState')
     if (!game) return res.status(404).json({ message: 'Session not found' })
-    res.status(200).json(game)
+
+    // Add maxHealth to each user in the response
+    const usersWithMaxHealth = await Promise.all(game.users.map(async user => {
+      // Try to get maxHealth from characterState, fallback to Character if needed
+      let maxHealth = null;
+      if (user.characterState && user.characterState.health) {
+        maxHealth = user.characterState.health;
+      } else {
+        // Fallback: fetch Character by name/class/avatar
+        const character = await Character.findOne({
+          characterName: user.characterName,
+          class: user.class,
+          avatar: user.avatar
+        });
+        if (character) maxHealth = character.maxHealth;
+      }
+      return { ...user.toObject(), maxHealth };
+    }));
+
+    const gameObj = game.toObject();
+    gameObj.users = usersWithMaxHealth;
+    res.status(200).json(gameObj);
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
 }
 
@@ -247,13 +278,14 @@ exports.removePlayer = async (req, res) => {
   }
 }
 
-// Add a spectator to a session
+// Add a spectator to a session by roomCode
 exports.addSpectator = async (req, res) => {
   try {
-    const { sessionId } = req.params
+    const { roomCode } = req.params
     const userId = req.user.id // Extract userId from token
 
-    const game = await Game.findById(sessionId)
+    // Find the game by roomCode instead of sessionId
+    const game = await Game.findOne({ roomCode })
     if (!game) return res.status(404).json({ message: 'Session not found' })
 
     // Ensure the user is not already a spectator
@@ -279,7 +311,7 @@ exports.removeSpectator = async (req, res) => {
     if (!game) return res.status(404).json({ message: 'Session not found' })
 
     game.spectators = game.spectators.filter(
-      s => s.UserId.toString() !== userId
+      s => s.toString() !== userId
     )
     await game.save()
     res.status(200).json(game)
@@ -306,6 +338,55 @@ exports.updateCharacterState = async (req, res) => {
     // Update the character state
     user.characterState = characterState
     await game.save()
+    res.status(200).json(game)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.updateCharacterStates = async (req, res) => {
+  try {
+    const { sessionId } = req.params
+    const { currentTurnCharacterId, characterStates } = req.body // Expecting currentTurnCharacterId and array/object of character states
+    const userId = req.user.id // Extract userId from token
+
+    const game = await Game.findById(sessionId).populate('users.characterState')
+    if (!game) return res.status(404).json({ message: 'Session not found' })
+
+    // Check if the user is part of the game
+    const user = game.users.find(user => user.userid.toString() === userId)
+    if (!user) return res.status(404).json({ message: 'User not found in this session' })
+
+    // Update currentTurnCharacterId if provided
+    if (currentTurnCharacterId) {
+      game.currentTurnCharacterId = currentTurnCharacterId
+    }
+
+    // Handle character states - can be an array or object with character state properties
+    if (characterStates) {
+      // If characterStates is an array, iterate through each state
+      if (Array.isArray(characterStates)) {
+        for (const state of characterStates) {
+          const characterState = await CharacterState.findById(state._id)
+          if (characterState) {
+            Object.assign(characterState, state) // Update the character state with new values
+            await characterState.save()
+          }
+        }
+      } else if (typeof characterStates === 'object') {
+        // If characterStates is an object with multiple character states
+        for (const characterStateId in characterStates) {
+          const stateData = characterStates[characterStateId]
+          const characterState = await CharacterState.findById(characterStateId)
+          if (characterState) {
+            Object.assign(characterState, stateData) // Update the character state with new values
+            await characterState.save()
+          }
+        }
+      }
+    }
+
+    await game.save() // Save the game to update currentTurnCharacterId
     res.status(200).json(game)
   } catch (error) {
     res.status(500).json({ message: error.message })
