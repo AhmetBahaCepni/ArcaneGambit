@@ -23,7 +23,7 @@ A Node.js/Express backend API for a multiplayer game system with character manag
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/AhmetBahaCepni/ArcaneGambit
    cd backend
    ```
 
@@ -51,27 +51,16 @@ A Node.js/Express backend API for a multiplayer game system with character manag
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-# Server Configuration
-PORT=3001
+LOCAL_MONGODB_URI = mongodb://localhost:27017/arcanegambit # This is a placeholder URI, change it to your actual MongoDB URI
+JWT_SECRET = 1234 # This is a placeholder secret, change it to a secure value
 
-# MongoDB Configuration
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/gamedb
-LOCAL_MONGODB_URI=mongodb://localhost:27017/gamedb
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-here
-JWT_EXPIRES_IN=7d
+# Get your SMTP credentials from your email provider, for this example we use Gmail
+SMTP_USER=******@gmail.com
+SMTP_PASS=**** **** **** ****
+SMTP_HOST=smtp-relay.gmail.com
+SMTP_PORT=587
 
-# Admin Configuration (optional)
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=admin123
-
-# SSL Configuration (for HTTPS - optional)
-SSL_PRIVATE_KEY_PATH=/path/to/privkey.pem
-SSL_CERTIFICATE_PATH=/path/to/fullchain.pem
-
-# Database Selection
-USE_REMOTE_DB=false
 ```
 
 ### Environment Variables Explained
@@ -259,13 +248,6 @@ backend/
 - Check firewall settings
 - Verify server is binding to `0.0.0.0`
 - Ensure devices are on same network
-
-### Debug Mode
-Enable detailed logging by setting the following in your environment:
-```env
-NODE_ENV=development
-DEBUG=*
-```
 
 ## 📝 Logging
 
