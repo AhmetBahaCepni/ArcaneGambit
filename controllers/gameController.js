@@ -6,6 +6,7 @@ const CharacterState = require('../models/CharacterState')
 // Create a new game session
 exports.createSession = async (req, res) => {
   try {
+    console.log('createSession - Request Body:', JSON.stringify(req.body, null, 2))
     const { gameStatus, characterState, characterId } = req.body
     const userId = req.user.id // Extract userId from token
 
@@ -43,6 +44,7 @@ exports.createSession = async (req, res) => {
 
 exports.cvCreateSession = async (req, res) => {
   try {
+    console.log('cvCreateSession - Request Body:', JSON.stringify(req.body, null, 2))
     const { characterId } = req.body
     const userId = req.user.id // Extract userId from token
 
@@ -92,6 +94,7 @@ exports.cvCreateSession = async (req, res) => {
 
 exports.joinSession = async (req, res) => {
   try {
+    console.log('joinSession - Request Body:', JSON.stringify(req.body, null, 2))
     const { sessionId } = req.params
     const { characterId } = req.body
     const userId = req.user.id // Extract userId from token
@@ -105,13 +108,16 @@ exports.joinSession = async (req, res) => {
       return res.status(404).json({ message: 'Character not found' })
 
     // Check if character is already in the session
-    const existingUser = game.users.find(user => 
-      user.characterName === character.characterName && 
-      user.class === character.class &&
-      user.avatar === character.avatar
+    const existingUser = game.users.find(
+      user =>
+        user.characterName === character.characterName &&
+        user.class === character.class &&
+        user.avatar === character.avatar
     )
     if (existingUser) {
-      return res.status(400).json({ message: 'This character is already in the session' })
+      return res
+        .status(400)
+        .json({ message: 'This character is already in the session' })
     }
 
     // Create character state based on character properties
@@ -137,42 +143,91 @@ exports.joinSession = async (req, res) => {
   }
 }
 
-
 exports.getSession = async (req, res) => {
   try {
+    console.log('getSession - Request Params:', JSON.stringify(req.params, null, 2))
     const { sessionId } = req.params
     const game = await Game.findById(sessionId).populate('users.characterState')
     if (!game) return res.status(404).json({ message: 'Session not found' })
 
     // Add maxHealth to each user in the response
-    const usersWithMaxHealth = await Promise.all(game.users.map(async user => {
-      // Try to get maxHealth from characterState, fallback to Character if needed
-      let maxHealth = null;
-      if (user.characterState && user.characterState.health) {
-        maxHealth = user.characterState.health;
-      } else {
-        // Fallback: fetch Character by name/class/avatar
+    const usersWithMaxHealth = await Promise.all(
+      game.users.map(async user => {
+        // Try to get maxHealth from characterState, fallback to Character if needed
+        let maxHealth = null
+        if (user.characterState && user.characterState.health) {
+          maxHealth = user.characterState.health
+        } else {
+          // Fallback: fetch Character by name/class/avatar
+          const character = await Character.findOne({
+            characterName: user.characterName,
+            class: user.class,
+            avatar: user.avatar
+          })
+          if (character) maxHealth = character.maxHealth
+        }
+        return { ...user.toObject(), maxHealth }
+      })
+    )
+
+    const gameObj = game.toObject()
+    gameObj.users = usersWithMaxHealth
+    res.status(200).json(gameObj)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+
+exports.getSessionUnreal = async (req, res) => {
+  try {
+    console.log('getSessionUnreal - Request Params:', JSON.stringify(req.params, null, 2))
+    const { sessionId } = req.params
+    const game = await Game.findById(sessionId)
+      .populate('users.characterState')
+    if (!game) return res.status(404).json({ message: 'Session not found' })
+
+    // Add character details (vitality, attack, defense, etc.) to each user in the response
+    const usersWithCharacterDetails = await Promise.all(
+      game.users.map(async user => {
+        // Find the character that matches this user's character in the game
         const character = await Character.findOne({
           characterName: user.characterName,
           class: user.class,
           avatar: user.avatar
-        });
-        if (character) maxHealth = character.maxHealth;
-      }
-      return { ...user.toObject(), maxHealth };
-    }));
+        })
+        
+        const userObj = user.toObject()
+        if (character) {
+          userObj.character = {
+            _id: character._id,
+            characterName: character.characterName,
+            avatar: character.avatar,
+            class: character.class,
+            luck: character.luck,
+            attack: character.attack,
+            defense: character.defense,
+            vitality: character.vitality,
+            maxHealth: character.maxHealth
+          }
+        }
+        
+        return userObj
+      })
+    )
 
-    const gameObj = game.toObject();
-    gameObj.users = usersWithMaxHealth;
-    res.status(200).json(gameObj);
+    const gameObj = game.toObject()
+    gameObj.users = usersWithCharacterDetails
+    res.status(200).json(gameObj)
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message })
   }
 }
 
 // End a game session
 exports.endSession = async (req, res) => {
   try {
+    console.log('endSession - Request Params:', JSON.stringify(req.params, null, 2))
     const { sessionId } = req.params
     const game = await Game.findById(sessionId)
     if (!game) return res.status(404).json({ message: 'Session not found' })
@@ -191,6 +246,7 @@ exports.endSession = async (req, res) => {
 
 exports.deleteSession = async (req, res) => {
   try {
+    console.log('deleteSession - Request Params:', JSON.stringify(req.params, null, 2))
     const { sessionId } = req.params
     // find the session by id, if token acquirer is one of the players or the token acquirer is the admin, delete the session
     const game = await Game.findById(sessionId)
@@ -221,6 +277,7 @@ exports.deleteSession = async (req, res) => {
 // Add a player to a session
 exports.addPlayer = async (req, res) => {
   try {
+    console.log('addPlayer - Request Body:', JSON.stringify(req.body, null, 2))
     const { sessionId } = req.params
     const { characterState, characterId } = req.body
     const userId = req.user.id // Extract userId from token
@@ -237,15 +294,18 @@ exports.addPlayer = async (req, res) => {
       return res.status(404).json({ message: 'Character not found' })
 
     // Check if character is already in the session
-    const existingUser = game.users.find(user => 
-      user.characterName === character.characterName && 
-      user.class === character.class &&
-      user.avatar === character.avatar
+    const existingUser = game.users.find(
+      user =>
+        user.characterName === character.characterName &&
+        user.class === character.class &&
+        user.avatar === character.avatar
     )
     if (existingUser) {
       // Delete the character state we just created since we're not using it
       await CharacterState.deleteOne({ _id: characterStateData._id })
-      return res.status(400).json({ message: 'This character is already in the session' })
+      return res
+        .status(400)
+        .json({ message: 'This character is already in the session' })
     }
 
     game.users.push({
@@ -264,6 +324,7 @@ exports.addPlayer = async (req, res) => {
 
 exports.removePlayer = async (req, res) => {
   try {
+    console.log('removePlayer - Request Params:', JSON.stringify(req.params, null, 2))
     const { sessionId } = req.params
     const userId = req.user.id // Extract userId from token
 
@@ -281,6 +342,7 @@ exports.removePlayer = async (req, res) => {
 // Add a spectator to a session by roomCode
 exports.addSpectator = async (req, res) => {
   try {
+    console.log('addSpectator - Request Params:', JSON.stringify(req.params, null, 2))
     const { roomCode } = req.params
     const userId = req.user.id // Extract userId from token
 
@@ -304,15 +366,14 @@ exports.addSpectator = async (req, res) => {
 // Remove a spectator from a session
 exports.removeSpectator = async (req, res) => {
   try {
+    console.log('removeSpectator - Request Params:', JSON.stringify(req.params, null, 2))
     const { sessionId } = req.params
     const userId = req.user.id // Extract userId from token
 
     const game = await Game.findById(sessionId)
     if (!game) return res.status(404).json({ message: 'Session not found' })
 
-    game.spectators = game.spectators.filter(
-      s => s.toString() !== userId
-    )
+    game.spectators = game.spectators.filter(s => s.toString() !== userId)
     await game.save()
     res.status(200).json(game)
   } catch (error) {
@@ -323,6 +384,7 @@ exports.removeSpectator = async (req, res) => {
 // Update a player's character state
 exports.updateCharacterState = async (req, res) => {
   try {
+    console.log('updateCharacterState - Request Body:', JSON.stringify(req.body, null, 2))
     const { sessionId } = req.params
     const { characterState } = req.body
     const userId = req.user.id // Extract userId from token
@@ -346,6 +408,8 @@ exports.updateCharacterState = async (req, res) => {
 
 exports.updateCharacterStates = async (req, res) => {
   try {
+    console.log('updateCharacterStates - Request Body:', JSON.stringify(req.body, null, 2))
+    console.log('SEFA ISTEK ATTI')
     const { sessionId } = req.params
     const { currentTurnCharacterId, characterStates } = req.body // Expecting currentTurnCharacterId and array/object of character states
     const userId = req.user.id // Extract userId from token
@@ -355,7 +419,8 @@ exports.updateCharacterStates = async (req, res) => {
 
     // Check if the user is part of the game
     const user = game.users.find(user => user.userid.toString() === userId)
-    if (!user) return res.status(404).json({ message: 'User not found in this session' })
+    if (!user)
+      return res.status(404).json({ message: 'User not found in this session' })
 
     // Update currentTurnCharacterId if provided
     if (currentTurnCharacterId) {

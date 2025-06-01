@@ -38,7 +38,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/characters', authenticate, characterRoutes) // Protect character routes with authentication
 app.use('/api/games', authenticate, gameRoutes) // Protect game routes with authentication
 app.use('/api/ar', arRoutes) // Protect AR routes with authentication
-app.use('/api/unreal', authenticate, unrealRoutes) // Protect Unreal Engine routes with authentication
+app.use('/api/unreal', unrealRoutes) // Protect Unreal Engine routes with authentication
 app.use('/api/cv', authenticate, cvRoutes) // Protect CV routes with authentication
 
 // Error handling middleware

@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema({
   },
   isActive: {
     type: Boolean,
-    default: false // New field to track account activation
+    default: true // New field to track account activation
   },
   characters: [
     {
@@ -46,6 +46,6 @@ UserSchema.methods.comparePassword = function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password)
 }
 
-const User = mongoose.model('users', UserSchema)
+const User = mongoose.model('User', UserSchema) // Changed from 'users' to 'User'
 
 module.exports = User

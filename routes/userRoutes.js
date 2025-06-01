@@ -21,7 +21,7 @@ router.delete('/:id', authenticate, checkAdmin, userController.deleteUser)
 
 router.post('/register', userController.register)
 
-router.post('/register/:token', userController.activateAccount)
+// router.post('/register/:token', userController.activateAccount)
 
 
 // Forgot password

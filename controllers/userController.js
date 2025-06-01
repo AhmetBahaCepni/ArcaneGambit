@@ -55,7 +55,7 @@ exports.register = async (req, res) => {
     }
 
     // Create a new user as inactive
-    const user = new User({ email, password, isActive: false })
+    const user = new User({ email, password, isActive: true })
     await user.save()
 
     // Generate a verification code
@@ -95,41 +95,6 @@ exports.register = async (req, res) => {
     }, 15 * 60 * 1000) // 15 minutes
   } catch (error) {
     res.status(400).json({ message: error.message })
-  }
-}
-
-exports.activateAccount = async (req, res) => {
-  const { token } = req.params
-  const { email } = req.query
-  // request : 
-
-  try {
-    // Validate the token
-    const recoveryToken = await RecoveryToken.findOne({ token })
-    if (!recoveryToken) {
-      return res.status(400).json({ message: 'Invalid or expired token' })
-    }
-
-    const user = await User.findById(recoveryToken.userId)
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' })
-    }
-
-    // Check if the email matches
-    if (user.email !== email) {
-      return res.status(400).json({ message: 'Invalid email' })
-    }
-
-    // Activate the user account
-    user.isActive = true
-    await user.save()
-
-    // Remove the used recovery token from the database
-    await RecoveryToken.deleteOne({ token })
-    res.status(200).json({ message: 'Account activated successfully' })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
   }
 }
 
